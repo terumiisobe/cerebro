@@ -12,23 +12,49 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.terumi.isobe.cerebro.client.model.SignalApi;
+import com.terumi.isobe.cerebro.client.model.UltrasoundImage;
 
 public class ClientRn {
+	
+	
+	/**
+	 * Get all images reconstructed from server
+	 */
+	public List<UltrasoundImage> getAllImages() {
+		try {
+			
+			Client client = Client.create();
+			WebResource wr = client.resource("http://localhost:8080/cerebro/reconstruction/images");
+			@SuppressWarnings("unchecked")
+			List<UltrasoundImage> images = (List<UltrasoundImage>) wr.accept("application/json").type("application/json").get(UltrasoundImage.class);
+			
+			if (images == null || images.isEmpty()) {
+				System.out.println("No images reconstructed!");
+			}
+			
+			System.out.println("**Signal received from Cerebro server.");
+			
+			return images;
+			
+		}catch (Exception e) {
+			System.out.println("Exception receiving signal to Cerebro: " + e);
+		}
+		
+		return null;	
+	}
 	
 	/**
 	 * Send an ultrasound signal to reconstruction in server.
 	 * 
-	 * @param filename
-	 * @return
 	 */
-	public boolean reconstructSignal(Long userId, String filename) throws Exception {
+	public boolean reconstructSignal(String username, String filename) throws Exception {
 		List<BigDecimal> signal = new ArrayList<BigDecimal>();
 		List<BigDecimal> treatedSignal = new ArrayList<BigDecimal>();
 		try {
 			
 			signal = loadLocalFile(filename);
 			//treatedSignal = applyGain(signal);
-			SignalApi signalApi = convertToApi(userId, signal);
+			SignalApi signalApi = convertToApi(username, signal);
 			sendToCerebro(signalApi);
 			
 			return true;
@@ -42,11 +68,8 @@ public class ClientRn {
 	/**
 	 * Loads data from file to array in number format.
 	 * 
-	 * @param filename
-	 * @return
-	 * @throws Exception
 	 */
-	public List<BigDecimal> loadLocalFile(String filename) throws Exception {
+	private List<BigDecimal> loadLocalFile(String filename) throws Exception {
 		try {
 			BufferedReader abc = new BufferedReader(new FileReader("/home/terumi/development/workspace/CerebroClient/resources/" + filename + ".txt"));
 			List<String> signalString = new ArrayList<String>();
@@ -84,7 +107,7 @@ public class ClientRn {
 		}
 	}
 	
-	public List<BigDecimal> applyGain(List<BigDecimal> signal){
+	private List<BigDecimal> applyGain(List<BigDecimal> signal){
 		List<BigDecimal> treatedSignal = new ArrayList<BigDecimal>();
 		
 		int gainUp = 0;
@@ -103,15 +126,15 @@ public class ClientRn {
 		return treatedSignal;
 	}
 	
-	public SignalApi convertToApi(Long userId, List<BigDecimal> signal) {
+	private SignalApi convertToApi(String username, List<BigDecimal> signal) {
 		SignalApi signalApi = new SignalApi();
-		signalApi.setUserId(userId);
+		signalApi.setUsername(username);
 		signalApi.setSignal(signal);
 		
 		return signalApi;
 	}
 	
-	public void sendToCerebro(SignalApi signalApi) {
+	private void sendToCerebro(SignalApi signalApi) {
 		try {
 			
 			Client client = Client.create();

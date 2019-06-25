@@ -5,16 +5,16 @@ import java.util.List;
 
 public class SignalApi {
 	
-	private Long userId;
+	private String username;
 	
 	private List<BigDecimal> signal;
 	
-	public Long getUserId() {
-		return userId;
+	public String getUsername() {
+		return username;
 	}
 	
-	public void setUserId(Long id) {
-		this.userId = id;
+	public void setUsername(String id) {
+		this.username = id;
 	}
 	
 	public List<BigDecimal> getSignal(){
