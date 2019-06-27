@@ -24,9 +24,9 @@ public class ClientRn {
 		try {
 			
 			Client client = Client.create();
-			WebResource wr = client.resource("http://localhost:8080/cerebro/reconstruction/images");
+			WebResource wt = client.resource("http://localhost:8080/cerebro/reconstruction/images");
 			@SuppressWarnings("unchecked")
-			List<UltrasoundImage> images = (List<UltrasoundImage>) wr.accept("application/json").type("application/json").get(UltrasoundImage.class);
+			List<UltrasoundImage> images = (List<UltrasoundImage>) wt.accept("application/json").type("application/json").get(UltrasoundImage.class);
 			
 			if (images == null || images.isEmpty()) {
 				System.out.println("No images reconstructed!");
@@ -48,8 +48,8 @@ public class ClientRn {
 	 * 
 	 */
 	public boolean reconstructSignal(String username, String filename) throws Exception {
-		List<BigDecimal> signal = new ArrayList<BigDecimal>();
-		List<BigDecimal> treatedSignal = new ArrayList<BigDecimal>();
+		List<Float> signal = new ArrayList<Float>();
+		List<Float> treatedSignal = new ArrayList<Float>();
 		try {
 			
 			signal = loadLocalFile(filename);
@@ -69,9 +69,9 @@ public class ClientRn {
 	 * Loads data from file to array in number format.
 	 * 
 	 */
-	private List<BigDecimal> loadLocalFile(String filename) throws Exception {
+	private List<Float> loadLocalFile(String filename) throws Exception {
 		try {
-			BufferedReader abc = new BufferedReader(new FileReader("/home/terumi/development/workspace/CerebroClient/resources/" + filename + ".txt"));
+			BufferedReader abc = new BufferedReader(new FileReader("/home/terumi/development/workspace/cerebro/CerebroClient/resources/" + filename + ".txt"));
 			List<String> signalString = new ArrayList<String>();
 			String s;
 			
@@ -81,22 +81,10 @@ public class ClientRn {
 			abc.close();
 			System.out.println("**Signal loaded to array.");
 			
-			List<BigDecimal> signalDecimal = new ArrayList<BigDecimal>();
-			BigDecimal number;
-			Integer power;
-			
+			List<Float> signalDecimal = new ArrayList<Float>();			
 			for(int i = 0; i < signalString.size(); i++) {
-				if(signalString.get(i).contains("e")) {
-					String[] elements = signalString.get(i).split("e");
-					number = new BigDecimal(elements[0]); 
-					power = new Integer(elements[1]);
-					signalDecimal.add(i, number.multiply(new BigDecimal(Math.exp(power))));
-				}
-				else {
-					signalDecimal.add(i, new BigDecimal(signalString.get(i)));
-				}
+				signalDecimal.add(i, Float.parseFloat(signalString.get(i)));
 				//System.out.println("signalString: " + signalString.get(i).toString() + ", signalDecimal: " + signalDecimal.get(i).toString());
-
 			}
 			
 			System.out.println("**Signal converted to number format.");
@@ -126,7 +114,7 @@ public class ClientRn {
 		return treatedSignal;
 	}
 	
-	private SignalApi convertToApi(String username, List<BigDecimal> signal) {
+	private SignalApi convertToApi(String username, List<Float> signal) {
 		SignalApi signalApi = new SignalApi();
 		signalApi.setUsername(username);
 		signalApi.setSignal(signal);

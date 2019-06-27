@@ -4,17 +4,26 @@ import java.util.Date;
 
 public class UltrasoundImage {
 	
+	private Long userId;
+	
 	private String fileReference;
 	
 	private Date reconstructionStartTime;
 	
 	private Date reconstructionEndTime;
 	
-	private Long size;
+	private Integer size;
 	
-	private Long iterationsPerformed;
+	private Integer iterationsPerformed;
 	
-
+	public Long getUserId() {
+		return userId;
+	}
+	
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+	
 	public String getFileReference() {
 		return fileReference;
 	}
@@ -39,19 +48,19 @@ public class UltrasoundImage {
 		this.reconstructionEndTime = endTime;
 	}
 	
-	public Long getSize() {
+	public Integer getSize() {
 		return this.size;
 	}
 	
-	public void setSize(Long size) {
+	public void setSize(Integer size) {
 		this.size = size;
 	}
 	
-	public Long getIterationsPerformed() {
+	public Integer getIterationsPerformed() {
 		return this.iterationsPerformed;
 	}
 	
-	public void setIterationsPerformed(Long number) {
+	public void setIterationsPerformed(Integer number) {
 		this.iterationsPerformed = number;
 	}
 }
