@@ -32,10 +32,7 @@ public class JaxRsActivator extends Application {
 		Set<Class<?>> resources = new HashSet<>();
 		resources.add(ApiListingResource.class);
 		resources.add(SwaggerSerializers.class);
-		resources.add(FlightRest.class);
-		resources.add(AccommodationRest.class);
 		resources.add(ReconstructionRest.class);
-		resources.add(PackageRest.class);
 		return resources;
 	}
 }

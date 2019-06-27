@@ -12,9 +12,6 @@ public class UltrasoundImage {
 	
 	@Id
 	@GeneratedValue
-	private Long id;
-	
-	@NotNull
 	private Long userId;
 	
 	@NotNull
@@ -22,43 +19,24 @@ public class UltrasoundImage {
 	
 	@NotNull
 	private Date reconstructionStartTime;
-	
+
 	@NotNull
 	private Date reconstructionEndTime;
-	
+
 	@NotNull
-	private Long size;
-	
+	private Integer size;
+
 	@NotNull
-	private Long iterationsPerformed;
-	
-//	public UltrasoundImage() {
-//		
-//		this.userId = userId;
-//		this.fileReference = fileReference;
-//		this.reconstructionStartTime = reconstructionStartTime;
-//		this.reconstructionEndTime = reconstructionEndTime;
-//		this.size = size;
-//		this.iterationsPerformed = iterationsPerformed;
-//		
-//	}
-	
-	public Long getId() {
-		return this.id;
-	}
-	
-	public void setId(Long id) {
-		this.id = id;
-	}
+	private Integer iterationsPerformed;
 	
 	public Long getUserId() {
-		return this.userId;
+		return userId;
 	}
 	
 	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
-	
+
 	public String getFileReference() {
 		return fileReference;
 	}
@@ -83,20 +61,19 @@ public class UltrasoundImage {
 		this.reconstructionEndTime = endTime;
 	}
 	
-	public Long getSize() {
+	public Integer getSize() {
 		return this.size;
 	}
 	
-	public void setSize(Long size) {
+	public void setSize(Integer size) {
 		this.size = size;
 	}
 	
-	public Long getIterationsPerformed() {
+	public Integer getIterationsPerformed() {
 		return this.iterationsPerformed;
 	}
 	
-	public void setIterationsPerformed(Long number) {
+	public void setIterationsPerformed(Integer number) {
 		this.iterationsPerformed = number;
 	}
-			
 }

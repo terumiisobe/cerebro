@@ -12,10 +12,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.terumi.isobe.Cerebro.api.AirfareApi;
 import com.terumi.isobe.Cerebro.api.SignalApi;
 import com.terumi.isobe.Cerebro.model.UltrasoundImage;
-import com.terumi.isobe.Cerebro.rn.AirfareRn;
 import com.terumi.isobe.Cerebro.rn.ReconstructionRn;
 import com.terumi.isobe.Cerebro.util.DateUtil;
 

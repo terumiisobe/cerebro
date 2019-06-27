@@ -2,21 +2,17 @@ package com.terumi.isobe.Cerebro.rn;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import org.ejml.simple.SimpleMatrix;
-import org.jblas.DoubleMatrix;
 import org.jblas.FloatMatrix;
 
 import com.terumi.isobe.Cerebro.api.SignalApi;
 import com.terumi.isobe.Cerebro.dao.ReconstructionDao;
 import com.terumi.isobe.Cerebro.model.UltrasoundImage;
-
-import io.swagger.models.Response;
 
 public class ReconstructionRn {
 	
@@ -34,6 +30,7 @@ public class ReconstructionRn {
 	 * Loads model and signal to server
 	 */
 	public void loadsServerFiles(SignalApi signalApi) {
+		
 		FloatMatrix model = loadModelFile();
 		FloatMatrix signal = convertSignalToMatrix(signalApi);
 		reconstructSignal(model, signal);
@@ -41,18 +38,24 @@ public class ReconstructionRn {
 	}
 	
 	/**
-	 * Method called by the client to reconstruct a signal to an ultrasound image.
+	 * Method called by the client to reconstruct a signal into an ultrasound image.
 	 */
-	public void reconstructSignal(FloatMatrix model, FloatMatrix signal) {
+	private void reconstructSignal(FloatMatrix model, FloatMatrix signal) {
 		UltrasoundImage imageInfo = new UltrasoundImage();
-		FloatMatrix image = CGNEAlgorithm(model, signal);
+		
+		imageInfo.setReconstructionStartTime(new Date());
+		FloatMatrix image = CGNEAlgorithm(model, signal, imageInfo);
+		imageInfo.setReconstructionEndTime(new Date());
+		imageInfo.setSize(image.length);
+		
+//		reconstructionDao.saveReconstructedImage(imageInfo, convertMatrixToFloatList(image));
 	}
 	
 	/**
 	 * Executes CGNE algorithm.
 	 */
 	// H[50816x3600] g[50816x1] f[3600x1] r[50816x1] p[3600x1] alfa beta
-	public FloatMatrix CGNEAlgorithm(FloatMatrix model, FloatMatrix signal) {
+	private FloatMatrix CGNEAlgorithm(FloatMatrix model, FloatMatrix signal, UltrasoundImage imageInfo) {
 		FloatMatrix H = model;
 		FloatMatrix g = signal;
 		
@@ -60,42 +63,57 @@ public class ReconstructionRn {
 		FloatMatrix r = new FloatMatrix(50816, 1);
 		FloatMatrix p = new FloatMatrix(3600, 1);
 
-		FloatMatrix alfa;
-		FloatMatrix beta;
+		Float alfa;
+		Float beta;
 		FloatMatrix nextR;
 		
 		// f0, r0 and p0
 		f = FloatMatrix.zeros(3600, 1);
-		FloatMatrix aux = H.mmul(f);
-		r = g.sub(aux);
+		r = g;
 		p = H.transpose().mmul(r);
-		
-		int iteractions = 0;
-		while(!stopCondition(r)) {
-			
-			alfa = (r.transpose().mmul(r)).div(p.transpose().mmul(p));
-			f = f.add(alfa.mmul(p));
-			nextR = r.sub(alfa.mmul(H.mmul(p)));
-			beta = (nextR.transpose().mmul(nextR)).div(r.transpose().mmul(r));
-			p = H.transpose().mmul(nextR).add(beta.mmul(p));
-			r = nextR;
 
+		int iteractions = 0;
+		boolean condition = true;
+		while(condition) {
+			
+			alfa = (r.dot(r))/(p.dot(p));
+			f.addi(p.mul(alfa));
+			
+			FloatMatrix aux1 = H.mul(alfa);
+			FloatMatrix aux2 = aux1.mmul(p);
+			nextR = r.sub(aux2);
+			
+			beta = (nextR.dot(nextR))/(p.dot(p));
+			
+			FloatMatrix aux3 = H.transpose().mmul(nextR);
+			FloatMatrix aux4 = p.mul(beta);
+			p = aux3.add(aux4);
+			
+			condition = !stopCondition(r, nextR);
+			
+			r = nextR;
+			
 			iteractions += 1;
 		}
 		
+		imageInfo.setIterationsPerformed(iteractions);
 		return f;
 	}
 	
-	public Boolean stopCondition(FloatMatrix residue) {
-		Float residueNorm = residue.norm2();
-		Float limit = (float) 0.000271828; 
+	/**
+	 * Checks if the difference of the residue is lower than the limit.
+	 * 
+	 */
+	private Boolean stopCondition(FloatMatrix residueBefore, FloatMatrix residueAfter) {
+		Float residueBeforeNorm = residueBefore.norm2();
+		Float residueAfterNorm = residueAfter.norm2();
+		Float limit = (float) 0.0001; 
 		
-		if(residueNorm.compareTo(limit) <= 0) {
+		if(Math.abs(residueAfterNorm - residueBeforeNorm) <= limit) {
+			System.out.println("**Algorithm stopped at residue = " + (residueAfterNorm - residueBeforeNorm));
 			return true;
-		}
+		}		
 		
-		System.out.println("**Executed algorithms with residue = " + residueNorm.toString());
-
 		return false;
 	}
 
@@ -103,9 +121,9 @@ public class ReconstructionRn {
 	 * Loads model file H, which contains the matrix model, and converts it to a matrix.
 	 */
 	// implements possibility to select another model file
-	public FloatMatrix loadModelFile() {
+	private FloatMatrix loadModelFile() {
 		try {
-			BufferedReader abc = new BufferedReader(new FileReader("/home/terumi/development/workspace/cerebro/server/src/main/resources/H-1.txt"));
+			BufferedReader abc = new BufferedReader(new FileReader("/home/terumi/development/workspace/cerebro/cerebro/server/src/main/resources/H-1.txt"));
 			List<String> rawArray = new ArrayList<String>();
 			String line;
 			
@@ -127,47 +145,42 @@ public class ReconstructionRn {
 		return null;
 	}
 	
-	public FloatMatrix convertFileToMatrix(List<String> rawArray) {
+	private FloatMatrix convertFileToMatrix(List<String> rawArray) {
 		try {
 			FloatMatrix model = new FloatMatrix(50816, 3600);
-
 			for(int i = 0; i < rawArray.size(); i++) {
 				String[] elementsSingleLine = rawArray.get(i).split(",");
-				//DoubleMatrix rowOfModel = new DoubleMatrix(3600, 1);
-				
-				String[] element;
-				Double number;
-				Integer power;
 				for(int j = 0; j < elementsSingleLine.length; j++) {
-					if(elementsSingleLine[j].contains("e")) {
-						element = elementsSingleLine[j].split("e");
-						number = Double.parseDouble(element[0]);
-						power = new Integer(element[1]);
-	 					//rowOfModel.put(j, number*(Math.pow(Math.E, (double) power)));
-						model.put(i, j, (float) (number*(Math.pow(Math.E, (double) power))));
-					}
-					else {
-						//rowOfModel.put(j, Double.parseDouble(elementsSingleLine[j]));
-						model.put(i, j, (float) Double.parseDouble(elementsSingleLine[j]));
-					}
+					model.put(i, j, Float.parseFloat(elementsSingleLine[j]));
 				}
-				//model.putRow(i, rowOfModel);
 			}
 						
 			return model;
+			
 		}catch(Exception e) {
 			throw e;
 		}
 	}
 	
-	public FloatMatrix convertSignalToMatrix(SignalApi signalApi) {
+	private FloatMatrix convertSignalToMatrix(SignalApi signalApi) {
 		FloatMatrix g = new FloatMatrix(50816, 1);
-		List<BigDecimal> signal = signalApi.getSignal();
+		List<Float> signal = signalApi.getSignal();
 		
 		for(int i = 0; i < signal.size(); i++) {
-			g.put(i, (float) signal.get(i).doubleValue());
+			g.put(i, signal.get(i));
 		}
 		
 		return g; 
 	}
+	
+	private List<Float> convertMatrixToFloatList(FloatMatrix matrix) {
+		List<Float> image = new ArrayList<Float>();
+		
+		for(int i = 0; i < matrix.length; i++) {
+			image.add(i, matrix.get(i));
+		}
+		
+		return image; 
+	}
+
 }

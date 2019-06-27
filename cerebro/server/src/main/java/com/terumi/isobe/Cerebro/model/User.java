@@ -1,12 +1,21 @@
 package com.terumi.isobe.Cerebro.model;
 
-import java.util.List;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 
+@Entity
 public class User {
 	
+	@Id
+	@GeneratedValue
 	private Long id;
+	
+	@NotNull
 	private String username;
-	private List<UltrasoundImage> images;
+	
+//	private List<UltrasoundImage> images;
 	
 	public Long getId() {
 		return id;
@@ -20,10 +29,10 @@ public class User {
 	public void setName(String username) {
 		this.username = username;
 	}
-	public List<UltrasoundImage> getUltrasoundImage(){
-		return images;
-	}
-	public void setUltrasoundImage(List<UltrasoundImage> images) {
-		this.images = images;
-	}
+//	public List<UltrasoundImage> getUltrasoundImage(){
+//		return images;
+//	}
+//	public void setUltrasoundImage(List<UltrasoundImage> images) {
+//		this.images = images;
+//	}
 }
