@@ -21,35 +21,35 @@ public class ClientView extends Application {
     }
     
     @Override
-    public void start(Stage primaryStage) throws Exception {
-//    	try {
-//        	Parent root = FXMLLoader.load(getClass().getResource("form.xml"));
-//        	primaryStage.setTitle("Welcome to Cerebro");
-//        	primaryStage.setScene(new Scene(root, 800, 500));
-//        	primaryStage.show();
-//    	}catch (Exception e) {
-//    		throw e;
-//    	}
-        primaryStage.setTitle("Welcome to Cerebro");
-        clientRn = new ClientRn();
-        Button btn = new Button();
-        
-        btn.setText("Send to Cerebro");
-        btn.setOnAction(new EventHandler<ActionEvent>() {
- 
-            @Override
-            public void handle(ActionEvent event){
-                try {
-                	clientRn.reconstructSignal("fenix", "g-1");
-                }catch(Exception e) {
-                	
-                }
-            }
-        });
-        
-        StackPane root = new StackPane();
-        root.getChildren().add(btn);
-        primaryStage.setScene(new Scene(root, 300, 300));
-        primaryStage.show();
+    public void start(Stage stage) throws Exception {
+    	try {
+        	Parent root = FXMLLoader.load(getClass().getResource("form.xml"));
+        	stage.setTitle("Welcome to Cerebro");
+        	stage.setScene(new Scene(root, 800, 500));
+        	stage.show();
+    	}catch (Exception e) {
+    		throw e;
+    	}
+//        primaryStage.setTitle("Welcome to Cerebro");
+//        clientRn = new ClientRn();
+//        Button btn = new Button();
+//        
+//        btn.setText("Send to Cerebro");
+//        btn.setOnAction(new EventHandler<ActionEvent>() {
+// 
+//            @Override
+//            public void handle(ActionEvent event){
+//                try {
+//                	clientRn.reconstructSignal("fenix", "g-1");
+//                }catch(Exception e) {
+//                	
+//                }
+//            }
+//        });
+//        
+//        StackPane root = new StackPane();
+//        root.getChildren().add(btn);
+//        primaryStage.setScene(new Scene(root, 300, 300));
+//        primaryStage.show();
     }
 }

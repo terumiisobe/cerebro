@@ -1,40 +1,69 @@
 package com.terumi.isobe.cerebro.client.rn;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
-import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.imageio.ImageIO;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.terumi.isobe.cerebro.client.model.ImageNamesApi;
 import com.terumi.isobe.cerebro.client.model.SignalApi;
-import com.terumi.isobe.cerebro.client.model.UltrasoundImage;
+import com.terumi.isobe.cerebro.client.model.UltrasoundImageApi;
 
 public class ClientRn {
 	
 	
 	/**
-	 * Get all images reconstructed from server
+	 * Saves chosen image locally
 	 */
-	public List<UltrasoundImage> getAllImages() {
+	public String saveImageLocally(String imageId) {
 		try {
 			
 			Client client = Client.create();
-			WebResource wt = client.resource("http://localhost:8080/cerebro/reconstruction/images");
-			@SuppressWarnings("unchecked")
-			List<UltrasoundImage> images = (List<UltrasoundImage>) wt.accept("application/json").type("application/json").get(UltrasoundImage.class);
-			
-			if (images == null || images.isEmpty()) {
-				System.out.println("No images reconstructed!");
-			}
+			WebResource wt = client.resource("http://localhost:8080/cerebro/reconstruction/image/" + imageId);
+			UltrasoundImageApi api= (UltrasoundImageApi) wt.accept("application/json").type("application/json").get(UltrasoundImageApi.class);
 			
 			System.out.println("**Signal received from Cerebro server.");
+
+			if (api == null || api.getImage() == null || api.getImage().isEmpty()) {
+				System.out.println("No images reconstructed!");
+				return null;
+			}
 			
-			return images;
+			saveInFile(api.getReference(), api.getImage());
+			return api.getReference();
+			
+		}catch (Exception e) {
+			System.out.println("Exception receiving signal to Cerebro: " + e);
+		}
+		return null;
+	}
+	
+	/**
+	 * Get all images reconstructed from server
+	 */
+	public List<String> getAllImages(String username) {
+		try {
+			
+			Client client = Client.create();
+			WebResource wt = client.resource("http://localhost:8080/cerebro/reconstruction/images/" + username);
+			ImageNamesApi api= (ImageNamesApi) wt.accept("application/json").type("application/json").get(ImageNamesApi.class);
+			
+			System.out.println("**Signal received from Cerebro server.");
+
+			if (api == null) {
+				System.out.println("No images reconstructed!");
+				return null;
+			}
+			
+			return api.getImageNames();
 			
 		}catch (Exception e) {
 			System.out.println("Exception receiving signal to Cerebro: " + e);
@@ -53,7 +82,7 @@ public class ClientRn {
 		try {
 			
 			signal = loadLocalFile(filename);
-			//treatedSignal = applyGain(signal);
+			treatedSignal = applyGain(signal);
 			SignalApi signalApi = convertToApi(username, signal);
 			sendToCerebro(signalApi);
 			
@@ -95,8 +124,8 @@ public class ClientRn {
 		}
 	}
 	
-	private List<BigDecimal> applyGain(List<BigDecimal> signal){
-		List<BigDecimal> treatedSignal = new ArrayList<BigDecimal>();
+	private List<Float> applyGain(List<Float> signal){
+		List<Float> treatedSignal = new ArrayList<Float>();
 		
 		int gainUp = 0;
 		int gain = 1;
@@ -106,7 +135,7 @@ public class ClientRn {
 				gain = gain + 1;
 			}
 			
-			treatedSignal.add(signal.get(i).add(new BigDecimal(gain)));
+			treatedSignal.add(signal.get(i) + gain);
 			//System.out.println("gain: " + gain + ", gainUp: " + gainUp + ", signal: " + signal.get(i).toString() + ", treated: " + treatedSignal.get(i).toString());
 			gainUp = gainUp + 1;
 		}
@@ -139,5 +168,27 @@ public class ClientRn {
 		}catch (Exception e) {
 			System.out.println("Exception sending signal to Cerebro: " + e);
 		}		
-	}	
+	}
+	
+	private void saveInFile(String filename, List<Float> data) {
+		BufferedImage bi = new BufferedImage(60, 60, BufferedImage.TYPE_BYTE_GRAY);
+		
+		for (int i = 0; i < 60; i++) {
+			for (int j = 0;j < 60; j++) {
+				bi.setRGB(i, j, toRGB(data.get(i*60 + j)));
+			}
+		}
+		try {
+			ImageIO.write(bi, "bmp", new File("/home/terumi/development/workspace/cerebro/CerebroClient/resources/images/" + filename + ".bmp"));
+			System.out.println("**Image saved to file.");
+			
+		}catch(Exception e) {
+			System.out.println("Exception saving to file: " + e);
+		}
+	}
+	
+	private int toRGB(Float value) {
+		int part = Math.round(value*255);
+		return part * 0x10101;
+	}
 }
